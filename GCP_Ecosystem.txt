@@ -1,0 +1,343 @@
+                                                              GCP Ecosystem:
+
+-------------------------------------------------------------- Concept -------------------------------------------------
+
+Global concept: !unique IP Address (not by region or zone)
+pricing:
+  - provisioned: get ready,i'll pay
+  - Usage:  Handle whatever issued, i'll pay.
+  - Network traffic: ingress free, egress is paying...Egress to GCP services sometimes free (fct(location,service))
+security:
+  - Separation of duties(no necessary permissions to complete malicious act for one person) and
+  - Data at rest: Encrypted
+  - Network encryption, control info encrepted, wan traffic encrypted, local traffic within DC will be encrypted
+  - BeyondCorp: security model, shift from network security to individual devices and users (no vpn will be needed)
+Scale and automation:
+  - necessary automation and unbounded scaling.
+  - limits exists
+
+Organization:
+  - Projects = aws accounts; own resources, resources can be shared along projects;
+
+-------------------------------------------------------------Products & Services -----------------------------------------
+1) Computing Engines:
+---------------------
+
+GCE:
+  -computing engine: Zonal, VMs, Iaas, choose machines, cheap long-term use in a region, pay seconds(1min minimun)
+GKE:
+  - Regional
+  - managed Kubernetes cluster for running Docker Containers with autoscaling. No IAM integration,pay for GCE instances.
+GAppsEngine:
+  - Paas, take the code and run it (Elastic Beanstalk, Heroku),integrate compute, storage, queues,NoSQL...
+  - supported languages: Java, Python, node.js, PHP, GO.
+  - Flex mode: App Engine Flex can run any container (any code like C#) & Access VPC
+Cloud Functions:
+  - Faas (user for serverless) pay for CPU, RAM (100ms minimum)
+  - each function automaticcaly gets HTTP endpoint.
+  - triggered by GCS, sub/pub msgs etc....
+  - Scalable when xxx events (xxx instances)
+
+2) Storage:
+-----------
+Local SSD:
+  - very fast. data will be lost at shutdown
+Persistent Disk:
+  - block-based network-attached storage  << SSD. data is persistent to be used later/attached. snapshots yes.
+  - not file based but block based.
+Cloud Filestore:
+  - file-based storage, accessible to GCE/GKE via VPC
+  - file serving but no backups(choose vendors), multiple instances writing in a file
+  - use case also in apps migration to cloud (lift and shift).
+  - 1 TB (regular) or 2.5TB premium.
+Cloud Storage- GCS:
+  - scalable, fully-managed, versioned, highly-durable object storage (bucket)
+  - Multi-regional(redundancy),regional, nearline/coldline(once a  month/year) durable, consistent, site hosting
+
+---------------------------------------------------------- Databases --------------------------------------------------------
+
+Cloud SQL:
+  - Mysql, postgresSQL. automatic supported replication, backups, failover.
+  - Regional, Manual Scaling (vertically & horizontally)
+Cloud Spanner:
+  - Regional and multi-regional
+  - from 1 to 100 or 1000 nodes for huuuge volumes . min 3 nodes in production env.
+  - First horizontally scalable, strongly consistent RD service (SQL Database)
+  - choose CP of CAP theorem: consistency and Partition-Tolerance...even availability is 99.99999% (5 nines 9)
+BigQuery BQ:
+  - multi-regional, serverless column-store DataWarehouse for analytics using SQL
+  - Scales internally in TB (seconds) or PB (minutes)
+  - Pay for queries and storage (reuse cached results for free)
+  - streaming inserts OK. pay for GBs
+BigTables BT:
+  - Zonal
+  - NoSQL purposes.column store
+  - Low latency & high throughpout NoSQL DB for large operational and analytical apps.
+  - Hbase API, integrate HADOOP, dataproc, dataflow, autoscale.
+  - pay for processing node/hour and GB-hours Storage.
+  - for Huuuge workloads
+Cloud DataStore:
+  - Regional/ multi-regional
+  - not huuuuge workloads for NoSQL DB, column store
+  - autoscaled NoSQL DB with indexes,queries and ACID transformation.
+  - Built-in/manual indexes;
+Firebased realtime DB:
+  - zonal:
+  - NoSQL document stores with realtime client updates via managed websockets
+  - Single JSON doc in central us
+  - Free Tier: spark, flat Tier: Flame,usage-based plan (Blaze)
+  - RealTime DB: pay GB store/downloaded
+Cloud Firestore:
+  - multi-regional: collections, documents and contained data.
+  - pay for operations less for storage
+-------------------------------------------------------------------- Data Transfer ----------------------------------------
+
+Data Transfer Appliance:
+  - Rackable, high capacity storage server to ship data physically to GCS
+  - ingest only large volumes of data (my data is on a DC)
+
+Storage Transfer Service:
+  - Global. destination is always GCS.
+  - source: S3, HTTP/HTTPS endpoints, GCS bucket...
+  - one-time or scheduled recurring transfer
+------------------------------------------------------------------ External Networking -----------------------------------
+
+Google Domains:
+  - Global
+  - Google's registrar for domain names
+  - Private Whois records. built-in DNS or custom nameservers.
+Cloud DNS:
+  - Global. low latency
+  - scalable, reliable and managed authoritative DNS service
+Static IP Addresses:
+  - Global
+  - reserve static IP address
+Cloud Load balancing CLB:
+  - Regional
+  - HP, scalable, autoscaling , cloud coldline
+  - Global load balancer (low latency) w/multi-region failover for http(s),ssl proxy,TCP proxy
+Cloud content delivery network CDN:
+  - cache external HTTP(S) load balanced content close to your users.
+
+--------------------------------------------------------------------Internal Networking ----------------------------------
+
+Send Data around my ecosystem
+Virtual Private Cloud VPC:
+  - Regional, Global
+  - Global IPv4 unicast software-defined network SDN for GCP resources.
+  - automatic/custom mode
+  - subnets, routes, firewalls, vpns, BGP configuration
+  - VPC Global, Subnets are regional (multi-zone in one region)
+  - Can be shared accross multiple projects in same org, peered with other VPC
+  - Enable private IPs access to GCP services
+Cloud interconnect:
+  - Regional, multi-regional.
+  - connect my system in VPC (internal GC) to my applications in DC (External)
+  - Private(external) connections to VPC (google network) via Cloud VPN or Dedicated/partner interconnect
+
+cloud VPN virtual private network:
+  - regional
+  - IPsec VPN to connect to VPC via public internet for low volume data connections.
+  - Persistent, static connections, encrypted link to VPC
+
+Dedicated interconnect:
+  - Direct physical link between VPC and on-premise: high volume data connections
+  - Vlan Attachement is private connections
+  - Links are private but not ENCRYPTED
+Cloud router:
+  - Dynamic routing BGP for linking GCP VPCs to external networks
+CDN interconnect:
+  - if external CDN is used. pull/push cache fills
+-------------------------------------------------------------- Machine Learning ---------------------------------------
+
+Cloud ML Engine:
+  - Regional (amazon sagemaker), scalable managed service for training ML models and make predictions
+  - based on TensorFlow.
+  - endless use cases....integrates GCS/BQ, cloud datalab (dev notebook), cloud dataflow
+  - prioritizing latency and job time...
+  - HyperTune automatically tunes model hyperparams
+Cloud Vision API:
+  -  Global,
+  - pre-trained ML models to analyse images/contents
+  - Classifies images into categories, detect objects/faces... pays for image and features.
+Cloud Speech API:
+  - automatic Speech Recognition to turn word audio files into files
+  - Pre-Trained ML models for recognizing 110+ languages...
+  - accept Recorded/real-time audio...
+Cloud NL API:
+  - Global
+  - Analyse text for sentiment, content classification, extract info
+  - Pre-trained ML model for understanding text means.
+Cloud Translation Appliance
+  - pre-trained ML model for recognizing and translating semantics and systax.
+  - Send plain text/Httml
+DialogFlow:
+  - Global
+  - Pre-trained ML model and services for accepting, parsing, lexing input and respond..
+  - Chatbot...
+Cloud Video intelligence API:
+  - Video scene analysis
+  - Pre-trainded ML model for video analysis
+  - Regional and Global...
+  - Label Detection, Shot change Detection...
+Cloud Job Discovery:
+  - Glabol
+  - pre-trained ML model to help job seekers search job posting databases...
+
+----------------------------------------------------------------- Big Data and IoT ----------------------------------
+
+Big Data Lifecycle:
+
+ingest : {AppEngine, compute engine, container engine, cloud Pub/Sub, Stackdriver Logging, Cloud transfer service}
+Store :  {Cloud Storage, Cloud SQL, Cloud Datastore, Cloud BigTable, BigQuery}
+Process&analyse: {Cloud Dataflow, Cloud Dataproc, BigQuery, Cloud ML, Cloud :[Speech,vision, translate,natural lang] API}
+Explore & Visualize:{Cloud Datalab, google Data Studio, google sheets }
+
+input connections via Cloud IoT Core:
+  - Global
+  - Fully-managed service to connect, manage and digest data from devices globally.
+  - handles identity, authentication, config and control
+  - protocol bridge publishes incoming telemetry to Cloud Pub/Sub for processing
+  - connection secured using IoT industry protocol MQTT/HTTPS protocols.
+  - CA signed certificates
+
+INGEST: Cloud Pub/Sub:publish and subscribe
+  - Global, ingestion
+  - scalable at-leat-once messaging for ingestion
+  - Publish and cosume from anywhere with consistent latency
+  - messages up 10MB. undelivre msgs stored for 7 days. No dead letter queue
+  - Push mode delivers to https endpoints
+  - Pull mode delivers msgs when requested
+
+Cloud Dataprep:
+  - Global
+  - visually explore, clean and prepare data for analysis without running servers
+  - Data wrangling (not ETL), cleansing... ready to process...
+Cloud Dataproc(clusters):
+  - zonal.
+  - (like Amazon EMR) or spark/hadoop clusters
+  - Batch MapReduce processing via configurable, managed spark&Hadoop clusters.
+  - scalable manually even while running jobs
+  - good to migrate from spark/hadoop clusters
+Cloud Dataflow(ETL):
+  - Zonal.
+  - for new projects instead of CloudDataproc
+  - Smartly-autoscaled and fully-managed batch or stream MapReduce-like processing
+  - Released as Apache Beam
+  - integrate with Pub/sub, datastore, BQ,BT, cloudML, stackdriver....
+Cloud Datalab:
+  - Regional
+  - After storing the processing Data,move for exploration tools and ML.
+  - Uses Jupyter notebook
+  - Python/SQl/JS code.
+Cloud DataStudio:
+  - Global
+  - results of ML or exploration to Visualize.
+  - Big Data Visualization tool for dashboards and reporting...
+  - like Tableau
+  - all sort of templates...
+Cloud Genomics:
+
+----------------------------------------------------------------- Identity and Access (Core security)-----------------------------------------------
+
+Authentication, authorisation (),accounting (audit)
+
+Roles:
+  - Global
+  - collections of permissions to use/manage resources
+  - Service.resource.verb : compute.instances.start (permissions)
+  - Primitive Roles: Owner, Editor, Viewer
+  - predefined roles: bigquery.dataEditor (to particular task)
+  - Custom roles: for projects
+
+Cloud IAM:
+  - Global
+  - controls access to GCP resources authorization pt
+  - member is: User, group, domain,service account, public
+  - individual group account/group
+  - service account: application/instance (not individual/user)
+  - Policies: members to roles at a hierarchy level
+Service Account:
+  - Global
+  - application/instance
+  - consider resources/permissions required by apps
+  - using private keys; by cloud-platform-managed keys;
+Cloud identity: (for people/users)
+  - identity as a Service to provision and manage users/groups.
+  - for non G-suite users; can sync with Active-directory and LDAP directories;
+  - identities can be used with SSO
+Security key enforcement:
+  - usb or bluetouth 2-step verification device.
+Cloud resource Manager:
+  - Global
+  - centrally manage & secure organisation's projects with custom folder hierarchy.organisation, projects, folder
+Cloud IAP:
+  - global
+  - instead VPN access, based on CLB and IAM
+Cloud audit logging:
+  - CloudTrail, Global.
+  - log not changed, nor deleted. audit logs for each project and organization
+  - admin activity & system events (400 days)
+----------------------------------------------------------------- Security Mgmt - Monitoring & response ----------------
+monitoring attacks and responding:
+Cloud Armor:
+  - Global
+  - protection DDoS and other attacks on global HTTPS LB
+  - monitor logs, manage IPs on allow/block lists
+  - Xss, SQLi, geo-bases, custom
+Security Scanner:
+  - GAE vulnerability scanner with very low false positive rates
+Cloud DLP(Data Loss Prevention) API:
+  - Global
+  - sensitive info in unstructed data streams
+  - scan text and image. data sent automatically...
+Event Threat Detection:
+  - Global
+  - Automatically scans your Stackdriver logs for suspicious activity...
+  - use threat intelligence, including Google Safe Browsing...malware cryptomining, outgoing DDoS attacks,
+    port scanning, brute-force snapshots
+Cloud security Command Center(SCC):
+  - Global
+  - SIEM: comprehensive security management and data risk platform for GCP (sec info and event mgmt)
+  - Security Marks to use....
+----------------------------------------------------------------- Encryption key mgmt ----------------------------------
+manage cryptographic keys
+Cloud KMS:
+  - Global, regional, multi-regional
+  - Symmetric (AES) and asymmetric (RSA,EC) algorithms;
+Cloud HSM (hadware security module):
+  - feature of Cloud KMS (backing security keys)
+
+------------------------------------------------------------------ operations and mgmt --------------------------------
+Google Stackdriver:
+  - Global
+  - family of services: monitoring, logging, diagnosing apps.
+  - Stackdriver account can track multiple: GCP projects, aws accounts
+  - Stackdriver Monitoring (like datadog,using metrics, dashboard,alerts...)
+  - Stackdriver Logging (like splunk, store, search, monitor, alert on LOG DATA & Events....)
+  - Stackdriver Error reporting (aggregates errors into group...)
+  - Stackdriver Trace: tracks and displays call tree & timing across distributed systems to debug perf, API,.
+  - Stackdriver Debugger: debugging..
+  - Stackdriver profiler: Global, profiling CPU and memory..Go java, node.js, Python are supported.
+  - Deployment manager: Global, Infra as code templates: YAML, Python, Jinja2
+  - Cloud Billing API: Billing config for GCP projects and get pricing.
+  ------------------------------------------------------------------ Development and APIs ---------------------------------
+  Cloud source Repository:
+    - Global
+    - like (Github)
+    - Hosted private Git repositories (no pull requests)
+    - auto sync with Github or Bitbucket.(repoSync)
+  Cloud Build:
+    - Global
+    - CI/CD service (like Travis CI/Jenkins)
+    - Build artifact package to link to repository. use parallel Build (many devs)
+    - Using Docker file
+  Container Registry GCR:
+    - Regional and multi-regional(like docker-hub)
+    - Fast, private Docker image storage...with Docker V2 registry API
+  Cloud Endpoints:
+    - Global
+    - handles autorization, monitoring, logging, API keys for APIs backed by GCP
+    - proxy requests
+  ApiGee API Platform:
+    - enterprise-scal API management platform.

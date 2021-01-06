@@ -1,0 +1,166 @@
+--------------------------------------------- Containers ---------------------------------------
+ in GCP: activate the Google Container Registry API
+ create new project
+ activate: Cloud Shell
+ gcloud auth  login // for login;
+ create a Dockerfile
+----------------------------------
+ *) create a container:
+  docker build -t myapp (tag the container we built: myapp)
+ docker images (check container  is there)
+ docker run -d -p (mapping port ex: 8888:8888) myapp (running new containers)
+ docker ps (check the img is running with name)
+ docker exec -it name_container /bin/bash (enter to the container)
+ docker stop|start name_container (stopping|starting existing containers)
+ docker rm name_container (remove the container not the image)
+ --------------------------------
+ docker tag myapp:latest gcr.io/myproject/myapp:official_name (tag first: prepare my image to push to google cloud registry)
+ docker images (see the image name)
+ docker push gcr.io/myproject/myapp:official_name (check in GCR)
+
+ ------------------------------------------------ Google Kubernetes: Definitions  ---------------------------------
+*) Cluster:
+- Master: 1+, CONTROL PLANE, make decisions (scheduling) running on VMs
+          APIServer: front communication (our day to day front w/  GKE)
+          etcd: DB (key,value store) for configuration
+          Scheduler: schedule loads
+          Cloud controller mgr: to work for google cloud (networking, LB)
+          Kube controller mgr: manager controller like nodes
+- Node: runtime env, rcs
+        Kubelet: Agent with Master
+        kube-proxy: manager network
+        container-runtime: to work
+
+*) Building K cluster:
+- Manually: provision VMs (for master and nodes)
+           Install Kubernetes, create network overlay, set up CA
+- Easy: GKE
+
+*) Kubectl: manage, run the cluster via APIServer, by defining objects in Kubernetes
+            EVERYTHING IN KUBERNETES IS OBJECT
+  in GCR: search for the container to deploy: deploy to GKE, in worloads dont forget to expose port.
+          the LB will expose the service and get external IP
+------------------------------------------------ Google Kubernetes: Managing -----------------------------------------
+*) to use Kubectl (CLI) first:
+  gcloud container clusters get-credentials name_cluster --zone=cluster_zone
+*) check nodes:
+  kubectl get nodes (nodes: vms)
+  kubectl get pods (apps running)
+  kubectl get services
+*) make a deployment:
+  kubectl create deployment nginx --image nginx  (deployment.apps/nginx created)
+  kubectl get pods (check nginx)
+*) expose port, IPadress:
+  kubectl expose deployment nginx --port=80 --type=LoadBalancer
+  kubectl get services
+-------------------------------
+*) Pods: smallest  unit to deploy (object)
+        host containers (1 to 3) sharing same ip address, volumes...
+        1 application: monolith and webserver, 1 app + db, 1app + tool to process output
+        multiple pods can be deployed on 1 kubernete Node
+*) create Pod:
+        with Kubectl
+        with YAML config file (declaratively, kind: Pod) (ca demande sur GCP: gcloud auth login)
+        $ kubectl apply -f mypod.yaml (create the pod based on config file yaml)
+        $ kubectl describe deployment mypod (check details abt deployment)
+        tip:pour checker un port ouvert (80), on utilise "web preview" du cloud shell.on tunnel-up le port 80 au port interne 8080
+          $ kubeclt port-forward nginx 8080:80
+        $kubectl delete -f mypod.yaml (delete objects created by yaml file)
+*) Multi container in 1 Pod:
+        multiple container can share the same Pod. sharing same env and volumes
+        $kubectl apply -f multi.yaml
+        to get into 1 container:
+        $kubectl exec -it multi -c ftp-container -- /bin/bash (-c: only when multi-containers)
+-----------------------------------
+*) ReplicaSet:
+      replicas of Pod objects, we can specify number of pods, not recommended to create RS on their own
+      fait en sorte d avoir tjrs le nombre defini de pods quoiqu'il en soit la situation
+      on fait mieux:
+*)Deployment: gere bien les  RS(a definir ds yaml)
+      object: managing pods and RS
+      Desired state is enforce by Deployment controller
+      Les pods changent  avec le maintien des RS sur les noeuds (cas de failure)
+      coment alors controler l acces des Pods avec ce changement ? avec les services
+*)Service: YAML config also could be set
+      Exposes a SET OF PODS to the network : Assign fixed IP to Pod Replicas
+      3 main services:
+        ClusterIP(by default when Type not specified): accessed inside the cluster
+        NodePort,
+        LoadBalancer: accessed outside the cluster: exposition a l externe
+      configuration: with Selectors
+      Labels are key-value  pairs  in object metadata (ex: app=nginx: chaque pod qui a app egal a nginx, fera partie du service)
+      $kubectl apply -f myapp-service.yaml (run the service)
+      $kubectl get services (to check: if type: LB check external-ip OK)
+
+Exo Availability: Z!!! Tips:
+- simulating one pod down: $kubectl delete pod myapp-deployment-1_of_3pods
+- voir les noeuds (VMs) et pods associes:
+  $kubectl get pods -o=custom-columns=NODE:.spec.nodeName,NAME:.metadata.name
+- corrompons un noeud: avec Taint!! et ensuite enlevons de pod qui run dessus;
+  $kubectl taint nodes (1_des_noeuds) key=value:NoSchedule (ajouter une metadata au noeud pour dire au scheduler de ne pas l utiliser)
+  $kubectl delete pod (pod running on node tainted)
+  $kubectl get pods -o=custom-columns=NODE:.spec.nodeName,NAME:.metadata.name
+  ==> Ceci va montrer qu un nouveau Pod est cree (le job de ReplicaSet de s assurer qu on le bon nombre), sur un noeud existant.
+  refaire UP le noeud:
+  $kubectl taint nodes (1_des_noeuds) key:NoSchedule-
+Exo Rollback:
+  When updating an appcode and apply new deployment(we dont WANT or by MISTAKE): ==> new replicSet of pods is created.
+  $kubectl apply -f myapp-deployment.yaml --record
+  $kubectl rollout status deployment.v1.apps/myapp-deployment
+  to roll back an app to defined versionv1:
+  $kubectl rollout undo deployment.v1.apps/myapp-deployment
+  check de RS: $kubectl get pods (new pods)
+
+  --------------------------------------------------------------------Troubleshooting, Monitoring Logging, Debuggin ----------------------------------------------
+
+ *) Monitoring and Logging:
+ dynamically creates deployments:
+ $kubectl create deployment nginx --image=nginx
+ $kubectl get pods
+ $kubectl describe pod nginx (config and events)
+ $kubectl expose deployment nginx --port=80 --type=LoadBalancer
+
+*) Stackdriver:ALWAYS logs with POD
+ get the Logs:
+ $kubectl logs pod/nginx-86c57db685-ds8dr or for multiple pods:
+ $kubectl logs --selector run=nginx
+
+ *) Debugging failed DeploymentSpec
+  faire un failure:
+  - mettre plusieurs containers  dans un pod
+  $kubectl scale --replicas=10 deployment nginx
+  faire les checks;
+  - mauvais pods:
+  $kubectl run badluck1 --image=gcr.io/my-gke-project-300518/myapp:v42
+  le pod badluck1 cree mais ErrImagePull comme status (v42 doesn t exist)
+  $kubectl delete pod badluck1
+  - code applicatif pas  bon:
+  $kubectl run badluck2 --image=gcr.io/my-gke-project-300518/myapp:broken
+  $kubectl describe pod badluck2 (for confirming container error)
+  $$ kubectl logs pod/badluck2
+---------------------------------------------------------------------------Deploying Applications -------------------------------------------------------------------
+*) Pod reliability with health checks:(liveness probes: mijassate)
+- config Probe, performed by Handler (ExecAcion, TCPSocketAction, HTTPGetAction (200ok))
+- use: initialDelaySeconds, periodSeconds, timeoutSeconds; success/failure Threshold
+- pod states: pending, running, successing (action ok)
+- use: livenessProbe or readinessProbe(if takes time to be up: importing data eg) OR BOTH
+
+------------------------------------------------------------------------------- Accessing External Services -----------------------------------------------------------
+2 ways:
+*) Service Endpoints:
+  - create service with no Selector : K8S looks for an endpoint w/ the same NAME;
+  - endpoints: External Services mapping to Service objects (internal DNS to Access services)
+  - Use type "ExternalName" to map to externalFQDNs(no endpoints required)
+*) SideCars: another container to access external service (to connect)
+    app can access to sidecar container via localhost/127.0.0.1
+---------------------------------------------------------------------
+exo: as a sidecar:with myapp:
+  - add a container of mysql DB instance;
+  - myapp should have a service account to access mysql db
+  - create a service Acct: gcloud iam service-accounts create cloudsqlproxy
+  - assign permissions:
+  gcloud projects add-iam-policy-binding my-gke-project-300518
+  --member serviceAccount:cloudsqlproxy@my-gke-project-300518.iam.gserviceaccount.com --role roles/cloudsql.client
+  - add key for service account cloudsqlproxy as json :
+  gcloud iam service-accounts keys create ./sqlproxy.json --iam-account cloudsqlproxy@my-gke-project-300518.iam.gserviceaccount.com
+   - get the DB "connection name" and go to deployment.yaml to add a container (as sidecar to myapp)

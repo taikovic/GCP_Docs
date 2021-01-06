@@ -1,0 +1,40 @@
+----------------------------------------------------------------------- Deployment YAML file ----------------------------------
+labels:
+string Key:value pair to organize, categorize objets
+--------------------------------------------------------------------------------
+spec (object)
+Specification of the desired behavior of the Deployment.
+DeploymentSpec is the specification of the desired behavior of the Deployment.
+--------------------------------------------------------------------------------
+-replicas (integer) % RS
+Number of desired pods
+
+-selector (object) % RS
+Label selector for pods.
+Existing ReplicaSets whose pods are selected by this will be the ones affected by this deployment.
+It must match the pod template's labels. A label selector is a label query over a set of resources.
+The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects.
+A null label selector matches no objects.
+--------------------------------------------------------------------------------
+-template (object) % Pods
+Template describes the pods that will be created.(metadata, labels)
+-spec:
+PodTemplateSpec describes the data a pod should have when created from a template
+  containers
+------------------------------------------------------------------- Service YAML file ---------------------------------------------
+spec (object):Spec defines the behavior of a service.
+ServiceSpec describes the attributes that a user creates on a service.
+* Selector:
+Route service traffic to pods with label keys and values matching this selector.
+A Service identifies its member Pods with a selector. For a Pod to be a member of the Service,
+the Pod must have all of the labels specified in the selector. A label is an arbitrary key/value pair that is attached to an object.
+* ports (object[]):The list of ports that are exposed by this service.
+Supported properties:
+1. name (string):The name of this port within the service.
+2. nodePort (integer)
+3. port (integer) Required:The port that will be exposed by this service.
+4. protocol:[TCP, UDP, SCTP].
+5. targetPort (object): Number or name of the port to access on the pods targeted by the service. Number must be in the range 1 to 65535.
+* type: valid values: [ExternalName, ClusterIP, NodePort, LoadBalancer].
+
+----------------------------------------------------------------------------Deploying applications-----------------------------------
