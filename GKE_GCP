@@ -236,7 +236,23 @@ Exo:
 Exo:
     docker build -t + docker tag ... + docker push gcr.io/....
       => with google CLI: gcloud builds submit --tag gcr.io/my-project/myapp:v1
+--------------------------------------------------------------------------------------- Autoscaling ----------------------------------------------------
 
+*) Autoscaling Pods horizontaly:
+ - HorizontalPodAutoscaler: object => yaml file for this object Kind, W/ scaleTargetRef in spec as the application
+ - autoscal the number of Pod replicas
+ - cpu and ram threshold in config, and min/max number of pods (minReplicas, maxReplicas, targetCPUUtilizationPercentage)
+ - custom metrics: applications, stackdriver metrics
+
+*) Autoscaling Pods vertically: 
+ - increasing rsrc: CPU and RAM 
+ - VerticalPodAutoscaler: object as kind in yaml file
+ - updatePolicy: updateMode= auto => pods will be restarted
+ - for STATEFUL Applications
+
+*) Autoscaling cluster: 
+- Scale cluster Nodes: Node-pool autoscaling cluster in GKE.
+- group VMs in Node-pools; ram-intensive consumption get their node-pool
 
 
 
