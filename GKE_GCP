@@ -124,6 +124,7 @@ Exo Rollback:
  get the Logs:
  $kubectl logs pod/nginx-86c57db685-ds8dr or for multiple pods:
  $kubectl logs --selector run=nginx
+ $kubectl logs pod/myapp-deployment-id (-c container_name)
 
  *) Debugging failed DeploymentSpec
   faire un failure:
@@ -134,6 +135,7 @@ Exo Rollback:
   $kubectl run badluck1 --image=gcr.io/my-gke-project-300518/myapp:v42
   le pod badluck1 cree mais ErrImagePull comme status (v42 doesn t exist)
   $kubectl delete pod badluck1
+  $ kubectl delete --all pods (deployments, services)
   - code applicatif pas  bon:
   $kubectl run badluck2 --image=gcr.io/my-gke-project-300518/myapp:broken
   $kubectl describe pod badluck2 (for confirming container error)
@@ -144,7 +146,18 @@ Exo Rollback:
 - use: initialDelaySeconds, periodSeconds, timeoutSeconds; success/failure Threshold
 - pod states: pending, running, successing (action ok)
 - use: livenessProbe or readinessProbe(if takes time to be up: importing data eg) OR BOTH
+*) !!!!CATCHER DES PROBLEMES AVEC DES PODS QUI TOURNENT AVEC TRAFFIC EN PROD: LIVENESSPROBE
+  - en image (docker) access (Endpoints: /... web ) via HTTPGet, every 3 seconds (initialDelaySeconds,periodSeconds) to test health of PODS
+   (to configure in deployment yaml file)
+  - qd les pods redemarrent  infiniment (a cause de pb de code: connection to DB impossible par ex), les pods se mettent dans le status,
+    CrashLoopBackOff...
+  - Kubernets se rend compte que le restart ne fixe pas le pb. et rebelotte, on redemarre
+  - le restart peut aider, si une application a besoin de memoire (out of memory) mais pas de pb fondamental de code;
 
+*) CATCHER DES PROBLEMES DE PODS AVANT LE TRAFFIC EN PROD: readinessProbe
+  - si les pods ne sont pas en succes (avec le check de readinessProbe), les pods ne seront pas ready.
+  donc ne seront pas alloues pour servir le traffic (probabelement externe du LB ou autres)
+*) TJRS: LES ANCIENS PODS, ROUTENT LE TRAFFIC AUX NOUVEAUX:
 ------------------------------------------------------------------------------- Accessing External Services -----------------------------------------------------------
 2 ways:
 *) Service Endpoints:
@@ -164,3 +177,91 @@ exo: as a sidecar:with myapp:
   - add key for service account cloudsqlproxy as json :
   gcloud iam service-accounts keys create ./sqlproxy.json --iam-account cloudsqlproxy@my-gke-project-300518.iam.gserviceaccount.com
    - get the DB "connection name" and go to deployment.yaml to add a container (as sidecar to myapp)
+   -------------------------------------------------------------------------------- Volumes and Persistent Storage ----------------------------------------------------------
+  *)  Container is ephemeral
+  - Volume independant object from app container
+  - to Access Volume files : mount directory in a container
+  *) Volume Types:
+      -- EmptyDir: shared by xxx container in the same Pod: deleted when pod removed from a node;
+      -- gcePersistentDisk: must be created beforehand, readonly by consumers, only unmounted after removing POD
+      -- PersistentVolumeClaim: claim for gke to request a PersistentVolume into a Pod. no other claim can reserve the same PV.
+  - PersistentVolume:
+      - manually: using existing GCP persistent disk w/ filesystem
+  - Access Modes:
+      - ReadWriteOne: a  single node can mount the volume read/write
+      - ReadOnlyMany: any node can mount the volume ReadOnly
+      - ReadWriteMany: any node can mount the volume Read/Write (not supported by gCP persistend disk)
+  *) Constraints:
+      - keep in mind (pods are distributed across different nodes) and deployments designed for stateless apps
+      - all replicas will share the same PersistentVolumeClaim: volume mode should be ReadOnlyMany (not readwrite only one single Pods in RS)
+      - deployment strategy may cause volume Deadlocks
+  *) Alternatives:
+      - GCS: object storage,
+      - managed Databases
+      - Cloud Filestore
+Exo:
+  - create persistentVolumeClaim.yaml file (kubectl apply -f dynamically)
+  - check: kubectl get pvc
+  - To create a secret object (to store usr/key pair):kubectl create secret generic mysql --from-literal=password=MYSECRETPASS
+  !! instead of deleting a pod with the full name: mysql-7fb84d4db9-wvsbh, we can delete pod with labels key/value:
+          $ kubectl delete pod -l app=mysql
+          $ kubectl delete -f wordpress-service.yaml (delete the service w/file)
+------------------------------------------------------------------------------------------ Special Volume Types ---------------------------------------
+
+*) Secrets:
+  - Designed to Store Sensitive Data,ex: credentials
+  - allows insert sensitive information at container runtime (not in the image)
+  - consumed: soit des variables d'env ou mount in FS container w/ volumes
+  - pas crypte par default, encode ds K8s (cluster)
+*) ConfigMaps:
+  - Decouple  config from image content; used in complex deployments
+    - Updating some settings or env variables when containers run
+    - having multiple images w/ some minor changes
+  - create configMaps from: config files, directory of config files or key-value pairs
+  - 2 methods:
+      x) containers run => insert values from 'configMaps' as Env variables (inside containers) for the system to access
+          use env (choose variables to use w/configKeyRef) or the whole configmaps w/ envFrom (configMapRef) and the name of configMap
+      x) Mount 'configMaps' data as Volume, container will then access config files without changing underlying image
+          on fait mount du configmap (defini ds un volumes) dans un FS (ds volumeMounts, dans mountPath)
+  - configmaps:  defined in Yaml,
+
+------------------------------------------------------------------------------------------- Deployment patterns ------------------------------------------
+1) - Regular Deployment: default deployment for stateless  deployment: new pods replacing  old pods.
+2) - Canary pattern:     multiple deployment w/ One single service, so small subset of traffic but in Production with Env Canary
+                        Service selector should take all app (No specific Env)
+3) - Blue/Green pattern: maintain 2 versions of app.With service selector, switch traffic from v1 to v2
+                        all traffic immediately sent to new deployment. In case of error, switch back to old version.
+                        in Service selector, add app version.
+
+Exo:
+    docker build -t + docker tag ... + docker push gcr.io/....
+      => with google CLI: gcloud builds submit --tag gcr.io/my-project/myapp:v1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      --
