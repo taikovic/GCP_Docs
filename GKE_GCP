@@ -226,7 +226,7 @@ Exo:
   - configmaps:  defined in Yaml,
 
 ------------------------------------------------------------------------------------------- Deployment patterns ------------------------------------------
-1) - Regular Deployment: default deployment for stateless  deployment: new pods replacing  old pods.
+1) - RollingUpdate Deployment: default deployment for stateless  deployment: new pods replacing  old pods; with max unavailable pods, 
 2) - Canary pattern:     multiple deployment w/ One single service, so small subset of traffic but in Production with Env Canary
                         Service selector should take all app (No specific Env)
 3) - Blue/Green pattern: maintain 2 versions of app.With service selector, switch traffic from v1 to v2
