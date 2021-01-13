@@ -253,6 +253,16 @@ Exo:
 *) Autoscaling cluster: 
 - Scale cluster Nodes: Node-pool autoscaling cluster in GKE.
 - group VMs in Node-pools; ram-intensive consumption get their node-pool
+---------------------------------------------------------------------------- Advanced: Helm -----------------------------------------------------------
+
+*) Helm: 
+        - Pks kukbernetes (obj manifests and configs) in -> Helm's Chart 
+        - maintains the lifecycle of deployment in K8s (named release)
+        - 2 components: helm (CLI) & Tiller (server side) 
+        - public repos for helm charts
+    Usage: 
+       - install helm -> initialize helm for cluster -> install helm chart (like: helm install stable/wordpress) -> helm applies manifests (in template) and specific config values
+        (values.yaml file) or default ones using also metadata (in chart.yaml and requirements.yaml)
 
 
 
