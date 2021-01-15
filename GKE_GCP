@@ -263,7 +263,27 @@ Exo:
     Usage: 
        - install helm -> initialize helm for cluster -> install helm chart (like: helm install stable/wordpress) -> helm applies manifests (in template) and specific config values
         (values.yaml file) or default ones using also metadata (in chart.yaml and requirements.yaml)
-
+Exo: 
+       - $helm init --service-account AcctName
+       - $kubectl get deploy,svc tiller-deploy -n kube-system : chek tiller is up and running on cluster 
+       - $helm install stable/bookstack (install the charts bookstack)
+       - $helm status name_release (check status w fill infos)
+       - $kubectl get pv (persistent volumes)
+   To change a value in release, we should upgrade it, exemple: 
+       - $helm upgrade --set service.type='LoadBalancer' dozing-robin stable/bookstack /to expose laodbalancer to web service;
+       - $helm list (list our releases on the cluster ) 
+       - $helm delete release-name; delete all pods/deployments/services/statefulsets/ relative to the release
+   Install a Chart with a Local values.yaml file: 
+       - $helm install -f values.yaml stable/bookstack --name taikbook
+--------------------------------------------------------------------------- Ingress Control ---------------------------------------------------------------
+*) Ingress: 
+      - Expose traffic in Customized way than the LoadBalancer; 
+      - for each service -> we configure an Ingress Object (defines How to route traffic): access the service from Outside Cluster 
+      - Designed for HTTP/s; securing w/ SSL, Routing to different Backend Systems based on: host names or URL paths (name/path -based routing)
+      - Define Ingress Resource ==> Ingress Controller: routes Traffic based on resources; 
+      - NGINX Ingress controller deployment is popular choice; 
+      - public ----> LoadBalancer(GC) -----> Ingress Controller ---> [ Service1,2,...,n  --------> Pods1,2,...,n ]_GKCluster 
+      - Ingress Controller checks Ingress resources to route traffic to services 
 
 
 
