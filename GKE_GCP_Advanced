@@ -36,7 +36,7 @@ Exo:
 -------------------------------------------------------------------------------------------------Cluster high Availability ---------------------------------------------------------
 *) workloads highly available: Create Regional GKE Clusters: 
 *) Storage highly available: Regional Persistent Storage; use nodeAffinity and nodeSelectorTerms
-*) maximum availability: run application accross  Multi-cluster Ingress (laodbalancer) across multiple GKE clusters
+*) maximum availability: run application across  Multi-cluster Ingress (laodbalancer) across multiple GKE clusters
    - use of kubemci;
    exo:
     - $KUBECONFIG=clusters.yaml gcloud container clusters create --zone=us-east4-a cluster-1 (create 1st cluster)
@@ -155,6 +155,22 @@ Exo:
         - Main application in master pods or container can t run till init containers have completed successfully; 
  exo: 
         $kubectl api-resources => look for all services  requested by kubectl and their shortnames; use (,) to rquest more services 
+        - for statefulsets like in Cassandra, when linking pods w/ their pv, in case a pod terminated => pv still exists (cqfd)
+        - est ce que le Cluster (cassandra) est production ready ? 
+                -- en Terme DR: le pire scenario: les nodes tombent, pas le pods ? 
+                -- check: pods/nodes: $kubectl get pods -o wide
+                -- let's cordon a specific node (from having any pod) to it (ne pas choisir le noeud premier qui a le premier pod cassandra-0)
+                        $kubectl cordon gke-cluster-1-default-pool-b8987439-zbzw (pour l ex)
+                        $kubectl delete pod cassandra-1 (delete le pod associe)
+                -- ce qui se passe: le pod est termine, juste apres on cree le meme pod (a cause du replicas) et on le link au node existant et on lui link le pv existant
+        - est-ce qu on est pret pour la prod? NON, le cluster est Zonal il faut le rendre regional.....
+                -- Need regional availability for HA: Pods in other zone should have their PV in the same zone!!!
+                -- Think to a separate Storage provider that can REPLICATE OUR DATA BETWEEN OUR NODES AND ZONES, EXEMPLE: ROOK;
+                -- Use rook: create common.yaml, operator.yaml => create ceph which is the backend storage for rook 
+                -- when pods are ready: create ceph cluster (yaml): $kubectl create -f ceph-cluster.yaml 
+                -- on deploie le statefulset apres: $kubectl apply -f xxx-statefulset.yaml 
+                -- $kubectl get pv: voir la storageClass si ca change et dorenavant pris en compte par rook
+        - 
         
         
 
