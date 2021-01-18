@@ -64,3 +64,152 @@ Exo:
        (Rules, instance groups for cluster, backend services, url maps, target proxies, forwarding rules and health checks)
     check mci: 
       -$ ./kubemci get-status zone-printer; try to connect with the static ip address;
+------------------------------------------------------------------------------------------ Cloud Native Security ------------------------------------------
+
+* think about your security considerations in cloud : 4 C's 
+        - Cloud: Think to project, VPC and IAM configuration, how they rely on any cloud resources running...
+                  ex: cluster nodes could be accessed outside the project;
+        - Cluster:Gke cluster; secure cluster: RBAC (role-based ac), namespaces and resources restrictions,
+                                Pod security policies, network policies, workload identity
+        - Container: trust, latest version w/ all necessary security updates
+        - Code: secure your code
+
+*) RBAC: 
+        - regulating access to cluster resources;
+        - roles defined at namespace OR Cluster Level; 
+        - Grants a specific set of actions to specific API groups and resources
+        - Role applies to namespaces, ClusterRole apply to clusters (could be on any namespaces)
+        **) Namespaces: 
+        - Isolate resources for multiple teams and projects  on the same cluster => are virtual clusters
+        - divide gKE cluster resources  with quotas;
+        - a scope for resource names: object names have to be UNIQUE within namespace; 
+        - 2 namespaces in GKE by default: default + kube-system
+        - Pods run in kube-system namespace; 
+        - define a namespace in yaml file; $kubectl -n kube-system get pods (-n: namespace)
+*) Pod security policies: 
+        - set of ctrls, conditions that Pod spec must meet in order to be scheduled; 
+        - to enable pod security policy: 
+                use of admission controller + creation of RBAC (role/clusterRole) w/permission to use policy
+                role must be bind to user or service account; 
+                without those actions, no pods will be scheduled; (podSecurityPolicy yaml)
+*) network policy:
+        - network access that Pods have; 
+        - kubernetes object that defines network ingress and egress rules for pods (like firewall rules)
+        - use selectors (to select pods) to restrict incoming/outgoing traffic
+        - can Isolate traffic between namespaces 
+        - reduce risk of application vulnerabilities affecting other cluster services
+        - should be enabled when gke cluster is built (sinon recreation des pods)
+        - networkPolicy yaml (ingress: incoming traffic)
+        - in security context: we can add IPC_LOCK for memory (in OS) to not let pods accessing shared disk, to access files 
+                swapped between memory and disk in linux (in case of sensitive data)
+*) workload identity: 
+        - secure gke workloads to consume gcp services; use service account;
+----------------------------------------------------------------------------------------------- DaemonSets ------------------------------------------------------------
+
+*) model: 
+        - One Pod per Node model: no replicaSet here, no scaling;
+        - each new node, will get new pod from DaemonSet;
+        - Specific uses: storage daemon for each node, custom logs, metrics collection service, monitoring daemons,     
+                          install custom drivers per node: GPU nodes install nvidia drivers (yaml file) 
+
+----------------------------------------------------------------------------------------------- Stateful applications -----------------------------------------------------------
+
+*) Stateless: 
+        - pods can be added, removed, restarted at will;
+        - individual pods have no data to persist, or concept of state; 
+ *) stateful:
+        - Pods have data to store and need persistent identity 
+        - deployment and scaling of pods must be logically managed:  must be rules 
+ To meet those requirement Kubernetes propose: 
+ 
+ *) StatefulSets: (vs deployments) 
+        - objects: that manages Pods based on a container spec, much like a Deployment
+        - Maintains an IDENTITY for each deployed POD (unlike deployment) 
+        - Guarantees the ordering and uniqueness of Pods; 
+        - Guarantees  Stable Network identity and persistent storage
+        - Ordered, graceful deployment, scaling and updates
+        - yaml manifest file; add: serviceName, 
+*) update strategy: 
+        - rolling updates delete and recreate pods in descending order 
+        - scheduling waits for pods to be running and ready before proceeding
+        - updates can be partitioned
+        - OnDelete Strategy: manual updates can be enforced with the strategy
+
+--------------------------------------------------------------------------------------------------- Finite tasks and init  Containers -------------------------------------------------------
+
+*) Jobs and cronJobs: 
+        - workload object that represents a finite task and manages it to completion;
+        - a non-parallel job: starts a pod, when the pods completes successfully => job is complete
+        - for a job: a pod spec, would involve a container and arguments to perform finite action; (not starting service)
+        - for multiple pods: use (completions: n) 1 one job at once;
+        - parallel jobs: have fixed completion count (how many jobs to run at once), running multiple pods to completion
+                         - useful for running batches of work 
+                         - parallelism is configurable, (use parallelism:n ) n jobs at once
+        - Jobs can be scheduled using cronjobs: use (schedule: "   ", and jobTemplate for pods
+ *) Init containers: 
+        - in Pod Spec: part of containers array;
+        - Execute BEFORE application or other containers in a pod;
+        - run in order (w/other inint containers) and to completion
+        - can separate start-up code from an application image;
+        - can contain logic that delays the start-up of an application image (checks, code files git;)
+        - Main application in master pods or container can t run till init containers have completed successfully; 
+ exo: 
+        $kubectl api-resources => look for all services  requested by kubectl and their shortnames; use (,) to rquest more services 
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
