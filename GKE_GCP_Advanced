@@ -193,25 +193,61 @@ Exo:
         tools: Jenkins, but not really cloud native, so GitLab, Gitactions,  google cloud build 
      ---------------------------------------------------------------------------------------------------------- Operators ---------------------------------------------------------------------------------
      *) use: operators extend kubernetes w/ custom resource definition
-                - Custom resources: sets of structured  data
-                - custom controller: to manage custom resources
+          - Custom resources: sets of structured  data
+          - custom controller: to manage custom resources
      ----------------------------------------------------------------------------------------------------------- Service Mesh (Istio )---------------------------------------------------------------------
      *) centralizes communication and control across all microservices(at scale)
-                - Data Plane: 
+          - Data Plane: 
                         -- a sidecar container running in every pod that manages communication
                         -- a sidecar container running Envoy proxy(istio)
                         -- controls network traffic in and out of the pod
                         -- communicates with Control plane to retreive routing logic and send metrics
-                - control plane: deployed set of applications for controlling microservices 
+          - control plane: deployed set of applications for controlling microservices 
                         -- 3 components in Istio: Pilot: configures data plane, defines proxy rules and behaviors
                         -- mixer: collects traffic metrics and responds to authorization, access control, quota checks 
                         -- citadel: manages identity and security across all services: assigns TLS  certificates, EtE encryption
      *) Istio to install as solution or google cloud Service mesh in anthos services 
         
    ------------------------------------------------------------------------------------------------------------- Serverless on kubernetes -------------------------------------------------------------------
-   *) 
+   *) Serverless: 
+        - Deployment method that abstracts servers away; 
+        - code application, click to serve the application without complex infrastracture task
+   *) 2 Deployments patterns: 
+        1) Container as a service: Caas : (serverless containers)
+                        -- deploy application as a container and let the platform automte everything else for you.
+                        -- can do it in Old K8s, but need deployment, update and autoscale
+                        -- one single container is accepted. 
+                        -- Popular solution: Google cloud Run (and aws fargate)
+        2)  Function as a Service: Faas: (serverless functions) snippets of code run on demand: Google cloud Functions (aws lambda)
 
+   *) Relation to Kubernetes: 
+        - k8s can run serverless functions and serverless containers 
+        1) Knative: 
+                        -- for serverless containers: 'click to deploy' 
+                        -- Extends k8s with new Custom Resources
+                        -- Dev has to build container and deployed to Knative (w service object): 
+                                takes care of networking, revision tracking & autoscaling
+        - Cloud Run: Knative-compatible implementation as a managed service without/with GKE cluster 
+        - donc Knative can be installed manually(build gke and install on cluster, ISTiO is required) OR as a 'Cloud Run on GKE' package
+        2) OpenFaas: 
+                        -- Open source Faas platform that runs on kubernetes
+                        -- install openFaas with helm on GKE cluster
+                        -- use Faas-cli and has a portal
+------------------------------------------------------------------------------------------------- GKE Futures ------------------------------------------------------------
 
+   *) GKE Advanced: 
+        - GKE Sanbox: based on gVisor; 
+        - Shielded VM nodes and binary authorization
+        - Cloud Run on GKE (implementation of Knative) 
+        - GKE node runtime pricing
+    *) Anthos: 
+        - Hybrid Cloud and enterprise ; 
+        - GKE ON-PREM: gke clusters outside GCP, in own DataCenter 
+        - Multi-cluster management and service mesh: managed from gcp console outside clusters
+        - cluster  config management: in yaml also 
+        - VM to Container migration
+        - plus Fees; 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
