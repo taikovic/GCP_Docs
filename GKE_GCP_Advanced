@@ -21,6 +21,8 @@ Exo:
        - $helm delete release-name; delete all pods/deployments/services/statefulsets/ relative to the release
    Install a Chart with a Local values.yaml file: 
        - $helm install -f values.yaml stable/bookstack --name taikbook
+*) Helm will use its public git repo by default, but can be configured to use other public or private chart repos, or deploy charts from a local filesystem.
+
 --------------------------------------------------------------------------- Ingress Control ---------------------------------------------------------------
 *) Ingress: 
       - Expose traffic in Customized way than the LoadBalancer; 
@@ -34,7 +36,10 @@ Exo:
         $curl --resolve myapp.example.com:80:35.238.32.151 http://myapp.example.com : qd on cherhe la page, elle a ete mappe avec le publicIP de l Ingress ctrler
          qui va router le traffic au bon service;
 -------------------------------------------------------------------------------------------------Cluster high Availability ---------------------------------------------------------
-*) workloads highly available: Create Regional GKE Clusters: 
+*) workloads highly available: Create Regional GKE Clusters:
+*) A regional cluster provides a single static endpoint for the entire cluster and spreads your cluster's Pods across multiple zones of a given region. 
+   In the event of the loss of a zone, your Pods can be rescheduled and the control plane remains available. However, 
+   you may still have constraints around the use and availability of persistent disks.
 *) Storage highly available: Regional Persistent Storage; use nodeAffinity and nodeSelectorTerms
 *) maximum availability: run application across  Multi-cluster Ingress (laodbalancer) across multiple GKE clusters
    - use of kubemci;
@@ -64,6 +69,8 @@ Exo:
        (Rules, instance groups for cluster, backend services, url maps, target proxies, forwarding rules and health checks)
     check mci: 
       -$ ./kubemci get-status zone-printer; try to connect with the static ip address;
+ *) The kubectl cordon and drain options allow you to safely remove Pods from a node and prevent further Pods being scheduled there. 
+ This can also be helpful when you need to perform maintenance on a node, like upgrading Kubernetes.
 ------------------------------------------------------------------------------------------ Cloud Native Security ------------------------------------------
 
 * think about your security considerations in cloud : 4 C's 
@@ -79,13 +86,15 @@ Exo:
         - roles defined at namespace OR Cluster Level; 
         - Grants a specific set of actions to specific API groups and resources
         - Role applies to namespaces, ClusterRole apply to clusters (could be on any namespaces)
-        **) Namespaces: 
+*) Namespaces: 
         - Isolate resources for multiple teams and projects  on the same cluster => are virtual clusters
         - divide gKE cluster resources  with quotas;
         - a scope for resource names: object names have to be UNIQUE within namespace; 
         - 2 namespaces in GKE by default: default + kube-system
         - Pods run in kube-system namespace; 
         - define a namespace in yaml file; $kubectl -n kube-system get pods (-n: namespace)
+        - Resource quotas attached to Namespaces can restrict the total amount of resource users of that Namespace may use. 
+                Additionally, RBAC can be used to guarantee developers in each team only have access to their own Namespace.
 *) Pod security policies: 
         - set of ctrls, conditions that Pod spec must meet in order to be scheduled; 
         - to enable pod security policy: 
@@ -107,6 +116,8 @@ Exo:
 ----------------------------------------------------------------------------------------------- DaemonSets ------------------------------------------------------------
 
 *) model: 
+        - DaemonSets can be used to deploy ongoing background tasks that need to run on all or certain nodes in your cluster. 
+                They can be useful for system daemons supporting storage, log collection and monitoring.
         - One Pod per Node model: no replicaSet here, no scaling;
         - each new node, will get new pod from DaemonSet;
         - Specific uses: storage daemon for each node, custom logs, metrics collection service, monitoring daemons,     
@@ -125,7 +136,7 @@ Exo:
  *) StatefulSets: (vs deployments) 
         - objects: that manages Pods based on a container spec, much like a Deployment
         - Maintains an IDENTITY for each deployed POD (unlike deployment) 
-        - Guarantees the ordering and uniqueness of Pods; 
+        - Guarantees the ordering and uniqueness of Pods:When Pods in a StatefulSet are being deleted, they are terminated and removed in reverse order.
         - Guarantees  Stable Network identity and persistent storage
         - Ordered, graceful deployment, scaling and updates
         - yaml manifest file; add: serviceName, 
@@ -134,6 +145,12 @@ Exo:
         - scheduling waits for pods to be running and ready before proceeding
         - updates can be partitioned
         - OnDelete Strategy: manual updates can be enforced with the strategy
+*) Persistent disks in StatefulSets are retained even if a Stateful Pod is removed, and must be manually deleted.
+*) StatefulSet on a regional GKE cluster in the event of the loss of a GCP zone:
+        -- GKE may attempt to reschedule the Stateful Pod in a zone where its persistent disk will not exist, 
+                so the Pod will no longer have access to its PersistentVolume
+        -- Regular GCP persistent disks are zonal resources, so cannot be mounted by nodes in other zones. 
+                There are some complex workarounds involving regional persistent disks and node affinities however.
 
 --------------------------------------------------------------------------------------------------- Finite tasks and init  Containers -------------------------------------------------------
 
@@ -170,9 +187,29 @@ Exo:
                 -- when pods are ready: create ceph cluster (yaml): $kubectl create -f ceph-cluster.yaml 
                 -- on deploie le statefulset apres: $kubectl apply -f xxx-statefulset.yaml 
                 -- $kubectl get pv: voir la storageClass si ca change et dorenavant pris en compte par rook
-        - 
+     ---------------------------------------------------------------------------------------------------------- CI/CD ------------------------------------------------------------------------------------- 
+     
+     *) GitOps: CI/CD: git, automation system to (push code w/ git, test, build container and deploy to cluster (in different env: branch). 
+        tools: Jenkins, but not really cloud native, so GitLab, Gitactions,  google cloud build 
+     ---------------------------------------------------------------------------------------------------------- Operators ---------------------------------------------------------------------------------
+     *) use: operators extend kubernetes w/ custom resource definition
+                - Custom resources: sets of structured  data
+                - custom controller: to manage custom resources
+     ----------------------------------------------------------------------------------------------------------- Service Mesh (Istio )---------------------------------------------------------------------
+     *) centralizes communication and control across all microservices(at scale)
+                - Data Plane: 
+                        -- a sidecar container running in every pod that manages communication
+                        -- a sidecar container running Envoy proxy(istio)
+                        -- controls network traffic in and out of the pod
+                        -- communicates with Control plane to retreive routing logic and send metrics
+                - control plane: deployed set of applications for controlling microservices 
+                        -- 3 components in Istio: Pilot: configures data plane, defines proxy rules and behaviors
+                        -- mixer: collects traffic metrics and responds to authorization, access control, quota checks 
+                        -- citadel: manages identity and security across all services: assigns TLS  certificates, EtE encryption
+     *) Istio to install as solution or google cloud Service mesh in anthos services 
         
-        
+   ------------------------------------------------------------------------------------------------------------- Serverless on kubernetes -------------------------------------------------------------------
+   *) 
 
 
 
