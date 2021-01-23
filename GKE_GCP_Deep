@@ -12,4 +12,3 @@
   - $kubectl set image deployment app app=gcr.io/xxxxx/xxx-app:2.0; deploy the new image
   - $kubectl get pods;confirm new pods are running
   - $curl http://xxx/xx.xxx.xxx:80; to confirm the new version
- *) 
