@@ -1,0 +1,21 @@
+-------------------------------------------------------------------------------------------- Introduction -----------------------------------------------------------------
+
+*) First steps: 
+  - $gcloud container clusters create k0 --zone=us-central1-c; to create the cluster
+  - $kubectl run app --image gcr.io/xxxxx/xxx-app:1.0 ; run the deployment app with a container image in gcr.io/...to deploy
+  - $kubectl get pods: to check pods deployed
+  - $kubectl scale deployments app --replicas 3; scale pods for reduncancy; 
+  - $kubectl get pods: check we have 3 pods;at this stage no one can see that, => open it up to the world;
+  - $kubectl expose deployment app --port 80 --type=LoadBalancer; expose to the world on a specific port via loadbalancer
+  - $kubectl get services || $kubectl get service app; inspecting the service works well for our app
+  - $curl http://xxx.xx.xxx.xxx:80 ; inspect the service 
+  - $kubectl set image deployment app app=gcr.io/xxxxx/xxx-app:2.0; deploy the new image
+  - $kubectl get pods;confirm new pods are running
+  - $curl http://xxx/xx.xxx.xxx:80; to confirm the new version
+  
+  *) donner a un user le droit de creer des role et role binding pour un gke: 
+  - $kubectl create clusterrolebinding cluster-admin-binding --clusterrole cluster-admin --user taiko_vic@yahoo.fr
+  - $kubectl create namespace ns-lac1
+  - $kubectl apply -f **.yaml (policy, role, rolebinding yaml files)
+  - to enable  policy security: 
+    $gcloud beta container clusters update security-cluster-1 --zone us-central1-c --enable-pod-security-policy
