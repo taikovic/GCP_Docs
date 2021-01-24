@@ -12,3 +12,10 @@
   - $kubectl set image deployment app app=gcr.io/xxxxx/xxx-app:2.0; deploy the new image
   - $kubectl get pods;confirm new pods are running
   - $curl http://xxx/xx.xxx.xxx:80; to confirm the new version
+  
+  *) donner a un user le droit de creer des role et role binding pour un gke: 
+  - $kubectl create clusterrolebinding cluster-admin-binding --clusterrole cluster-admin --user taiko_vic@yahoo.fr
+  - $kubectl create namespace ns-lac1
+  - $kubectl apply -f **.yaml (policy, role, rolebinding yaml files)
+  - to enable  policy security: 
+    $gcloud beta container clusters update security-cluster-1 --zone us-central1-c --enable-pod-security-policy
